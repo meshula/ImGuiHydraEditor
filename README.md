@@ -1,5 +1,11 @@
 # ImGui Hydra Editor
 
+The purpose of this fork is to explore using ImGuiHydraEditor as a library component in another application with minimal modification. As such, I want to be able to add the project to my own as a gitsubmodule, without redundantly bringing in extra copies of the dependencies of ImGuiHydraEditor, such as GLFW or Dear Imgui, as it gets confusing to manage paths and know which library is the "right" one, and which ones are "spurious".
+
+If I further library-ify this project, I will discuss approaches with raph080.
+
+--------------
+
 ImGui Hydra Editor is a Hydra editor written in c++ with the ImGui and OpenUSD frameworks.
 
 ![UI preview of ImGui Hydra Editor](resources/preview.png)
