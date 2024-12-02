@@ -8,28 +8,35 @@
 #include <pxr/imaging/hdx/pickTask.h>
 #include <pxr/imaging/hgi/tokens.h>
 
+// temporary
+
+#include <pxr/imaging/garch/glApi.h>
+
 PXR_NAMESPACE_OPEN_SCOPE
 
 Engine::Engine(HdSceneIndexBaseRefPtr sceneIndex, TfToken plugin)
-    : _sceneIndex(sceneIndex),
-      _curRendererPlugin(plugin),
-      _hgi(Hgi::CreatePlatformDefaultHgi()),
-      _hgiDriver{HgiTokens->renderDriver, VtValue(_hgi.get())},
-      _engine(),
-      _renderDelegate(nullptr),
-      _renderIndex(nullptr),
-      _taskController(nullptr),
-      _taskControllerId("/defaultTaskController")
+: _sceneIndex(sceneIndex),
+  _curRendererPlugin(plugin),
+  _hgi(Hgi::CreatePlatformDefaultHgi()),
+  _hgiDriver{HgiTokens->renderDriver, VtValue(_hgi.get())},
+  _engine(),
+  _renderDelegate(nullptr),
+  _renderIndex(nullptr),
+  _taskController(nullptr),
+  _taskControllerId("/defaultTaskController")
 {
     _width = 512;
     _height = 512;
 
+    // temporary gl init
     Initialize();
 }
 
 Engine::~Engine()
 {
+#ifdef USE_GLINTEROP
     _drawTarget = GlfDrawTargetRefPtr();
+#endif
 
     // Destroy objects in opposite order of construction.
     delete _taskController;
@@ -45,6 +52,7 @@ Engine::~Engine()
 
 void Engine::Initialize()
 {
+#ifdef USE_GLINTEROP
     // init draw target
     _drawTarget = GlfDrawTarget::New(GfVec2i(_width, _height));
     _drawTarget->Bind();
@@ -52,6 +60,7 @@ void Engine::Initialize()
     _drawTarget->AddAttachment(HdAovTokens->depth, GL_DEPTH_COMPONENT,
                                GL_FLOAT, GL_DEPTH_COMPONENT);
     _drawTarget->Unbind();
+#endif
 
     // init render delegate
     _renderDelegate = GetRenderDelegateFromPlugin(_curRendererPlugin);
@@ -194,9 +203,11 @@ void Engine::SetRenderSize(int width, int height)
 
     _taskController->SetFraming(framing);
 
+#ifdef USD_GLINTEROP
     _drawTarget->Bind();
     _drawTarget->SetSize(GfVec2i(width, height));
     _drawTarget->Unbind();
+#endif
 }
 
 void Engine::Present()
@@ -250,16 +261,19 @@ void Engine::Prepare()
 
 void Engine::Render()
 {
+#ifdef USE_GLINTEROP
     _drawTarget->Bind();
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+#endif
     HdTaskSharedPtrVector tasks = _taskController->GetRenderingTasks();
     _engine.Execute(_renderIndex, &tasks);
 
     Present();
 
+#ifdef USE_GLINTEROP
     _drawTarget->Unbind();
+#endif
 }
 
 SdfPath Engine::FindIntersection(GfVec2f screenPos)
