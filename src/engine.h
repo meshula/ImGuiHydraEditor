@@ -126,8 +126,13 @@ class Engine {
 
     private:
         UsdStageRefPtr _stage;
+
+#ifdef USD_GLINTEROP
         GlfDrawTargetRefPtr _drawTarget;
-        GfMatrix4d _camView, _camProj;
+        HgiInterop _interop;
+#endif
+
+    GfMatrix4d _camView, _camProj;
         int _width, _height;
 
         HgiUniquePtr _hgi;
@@ -141,7 +146,6 @@ class Engine {
         HdSceneIndexBaseRefPtr _sceneIndex;
         SdfPath _taskControllerId;
 
-        HgiInterop _interop;
         HdxSelectionTrackerSharedPtr _selTracker;
 
         TfToken _curRendererPlugin;

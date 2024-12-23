@@ -186,13 +186,17 @@ void Viewport::_UpdateGrid()
 
 void Viewport::_UpdateHydraRender()
 {
+    auto model = GetModel();
+    if (!model)
+        return;
+
     GfMatrix4d view = _getCurViewMatrix();
     float width = _GetViewportWidth();
     float height = _GetViewportHeight();
 
     // set selection
     SdfPathVector paths;
-    for (auto&& prim : GetModel()->GetSelection())
+    for (auto&& prim : model->GetSelection())
         paths.push_back(prim.GetPrimPath());
 
     _engine->SetSelection(paths);
@@ -205,7 +209,7 @@ void Viewport::_UpdateHydraRender()
 
     // create an imgui image with the drawtarget color data
     void* id = _engine->GetRenderBufferData();
-    ImGui::Image(id, ImVec2(width, height), ImVec2(0, 1), ImVec2(1, 0));
+    //ImGui::Image((ImTextureID) id, ImVec2(width, height), ImVec2(0, 1), ImVec2(1, 0));
 }
 
 void Viewport::_UpdateTransformGuizmo()

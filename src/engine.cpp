@@ -221,11 +221,13 @@ void Engine::Present()
         }
     }
 
+#ifdef USD_GLINTEROP
     uint32_t framebuffer = 0;
     _interop.TransferToApp(_hgi.get(), aovTexture,
                            /*srcDepth*/ HgiTextureHandle(), HgiTokens->OpenGL,
                            VtValue(framebuffer),
                            GfVec4i(0, 0, _width, _height));
+#endif
 }
 
 void Engine::PrepareDefaultLighting()
@@ -265,6 +267,8 @@ void Engine::Render()
     _drawTarget->Bind();
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#else
+    _taskController->SetEnablePresentation(false);
 #endif
     HdTaskSharedPtrVector tasks = _taskController->GetRenderingTasks();
     _engine.Execute(_renderIndex, &tasks);
@@ -320,9 +324,12 @@ SdfPath Engine::FindIntersection(GfVec2f screenPos)
 
 void* Engine::GetRenderBufferData()
 {
+#if USE_GLINTEROP
     GLint id =
-        _drawTarget->GetAttachment(HdAovTokens->color)->GetGlTextureName();
+    _drawTarget->GetAttachment(HdAovTokens->color)->GetGlTextureName();
     return (void*)(uintptr_t)id;
+#endif
+    return nullptr;
 }
 
 GfFrustum Engine::GetFrustum()
