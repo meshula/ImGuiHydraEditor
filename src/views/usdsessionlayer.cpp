@@ -1,6 +1,8 @@
 #include "usdsessionlayer.h"
 
+#ifdef HAVE_IMGUIFD
 #include <ImGuiFileDialog.h>
+#endif
 #include <pxr/imaging/hd/tokens.h>
 #include <pxr/usd/usdGeom/camera.h>
 #include <pxr/usd/usdGeom/capsule.h>
@@ -49,6 +51,7 @@ ImGuiWindowFlags UsdSessionLayer::_GetGizmoWindowFlags()
 void UsdSessionLayer::_Draw()
 {
     if (ImGui::BeginMenuBar()) {
+#ifdef HAVE_IMGUIFD
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("New scene")) { _SetEmptyStage(); }
 
@@ -64,6 +67,7 @@ void UsdSessionLayer::_Draw()
             }
             ImGui::EndMenu();
         }
+#endif
         if (ImGui::BeginMenu("Objects")) {
             if (ImGui::BeginMenu("Create")) {
                 if (ImGui::MenuItem("Camera"))
@@ -89,6 +93,7 @@ void UsdSessionLayer::_Draw()
     if (_IsUsdSessionLayerUpdated()) _LoadSessionTextFromModel();
     _editor.Render("TextEditor");
 
+#ifdef HAVE_IMGUIFD
     if (ImGuiFileDialog::Instance()->Display("LoadFile")) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -104,6 +109,7 @@ void UsdSessionLayer::_Draw()
         }
         ImGuiFileDialog::Instance()->Close();
     }
+#endif
 };
 
 void UsdSessionLayer::_SetEmptyStage()

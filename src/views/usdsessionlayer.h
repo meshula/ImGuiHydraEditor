@@ -48,6 +48,8 @@ class UsdSessionLayer : public View {
          */
         ImGuiWindowFlags _GetGizmoWindowFlags() override;
 
+        pxr::SdfLayerRefPtr GetSessionLayer() const { return _sessionLayer; }
+
     private:
         TextEditor _editor;
         bool _isEditing;
