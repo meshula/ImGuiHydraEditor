@@ -48,6 +48,7 @@ class UsdSessionLayer : public View {
          */
         ImGuiWindowFlags _GetGizmoWindowFlags() override;
 
+        void SetStage(pxr::UsdStageRefPtr stage);
         pxr::SdfLayerRefPtr GetSessionLayer() const { return _sessionLayer; }
 
     private:

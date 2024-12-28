@@ -127,6 +127,19 @@ void UsdSessionLayer::_SetEmptyStage()
     GetModel()->SetStage(_stage);
 }
 
+void UsdSessionLayer::SetStage(UsdStageRefPtr stage)
+{
+    _stage = stage;
+    _rootLayer = _stage->GetRootLayer();
+    _sessionLayer = _stage->GetSessionLayer();
+
+    _stage->SetEditTarget(_sessionLayer);
+    _stageSceneIndex->SetStage(_stage);
+    _stageSceneIndex->SetTime(UsdTimeCode::Default());
+
+    GetModel()->SetStage(_stage);
+}
+
 void UsdSessionLayer::_LoadUsdStage(const string usdFilePath)
 {
     if (!ifstream(usdFilePath)) {
