@@ -258,10 +258,14 @@ TextEditor::Palette UsdSessionLayer::_GetPalette()
     }};
 }
 
-TextEditor::LanguageDefinition UsdSessionLayer::_GetUsdLanguageDefinition()
+TextEditor::LanguageDefinition* UsdSessionLayer::_GetUsdLanguageDefinition()
 {
-    TextEditor::LanguageDefinition langDef =
+    static TextEditor::LanguageDefinition langDef =
         TextEditor::LanguageDefinition::C();
+
+    static bool init = true;
+    if (!init)
+        return &langDef;
 
     const char* const descriptors[] = {"add",    "append", "prepend", "del",
                                        "delete", "custom", "uniform", "rel"};
@@ -344,7 +348,7 @@ TextEditor::LanguageDefinition UsdSessionLayer::_GetUsdLanguageDefinition()
 
     langDef.mName = "USD";
 
-    return langDef;
+    return &langDef;
 }
 
 void UsdSessionLayer::_FocusInEvent()

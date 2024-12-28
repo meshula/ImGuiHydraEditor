@@ -134,7 +134,7 @@ class UsdSessionLayer : public View {
          *
          * @return TextEditor::LanguageDefinition
          */
-        TextEditor::LanguageDefinition _GetUsdLanguageDefinition();
+        TextEditor::LanguageDefinition* _GetUsdLanguageDefinition();
 
         /**
          * @brief Override of the View::_FocusInEvent
