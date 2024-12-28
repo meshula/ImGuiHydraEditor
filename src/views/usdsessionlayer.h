@@ -51,6 +51,12 @@ class UsdSessionLayer : public View {
         void SetStage(pxr::UsdStageRefPtr stage);
         pxr::SdfLayerRefPtr GetSessionLayer() const { return _sessionLayer; }
 
+        /**
+         * @brief Set the model to an empty stage
+         *
+         */
+        void SetEmptyStage();
+
     private:
         TextEditor _editor;
         bool _isEditing;
@@ -73,11 +79,6 @@ class UsdSessionLayer : public View {
          */
         void _LoadUsdStage(const string usdFilePath);
 
-        /**
-         * @brief Set the model to an empty stage
-         *
-         */
-        void _SetEmptyStage();
 
         /**
          * @brief Check if USD session layer was updated since the last load

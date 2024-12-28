@@ -35,7 +35,7 @@ UsdSessionLayer::UsdSessionLayer(Model* model, const string label)
     _stageSceneIndex = sceneIndices.stageSceneIndex;
     GetModel()->AddSceneIndexBase(sceneIndices.finalSceneIndex);
 
-    _SetEmptyStage();
+    SetEmptyStage();
 }
 
 const string UsdSessionLayer::GetViewType()
@@ -112,7 +112,7 @@ void UsdSessionLayer::_Draw()
 #endif
 };
 
-void UsdSessionLayer::_SetEmptyStage()
+void UsdSessionLayer::SetEmptyStage()
 {
     _stage = UsdStage::CreateInMemory();
     UsdGeomSetStageUpAxis(_stage, UsdGeomTokens->y);
@@ -145,7 +145,7 @@ void UsdSessionLayer::_LoadUsdStage(const string usdFilePath)
     if (!ifstream(usdFilePath)) {
         TF_RUNTIME_ERROR(
             "Error: the file does not exist. Empty stage loaded.");
-        _SetEmptyStage();
+        SetEmptyStage();
         return;
     }
 
