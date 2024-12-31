@@ -8,6 +8,27 @@
 #include <pxr/imaging/hd/cameraSchema.h>
 #include <pxr/imaging/hd/extentSchema.h>
 #include <pxr/usd/usd/stage.h>
+#include <pxr/imaging/hgi/blitCmdsOps.h>
+#include <pxr/imaging/hgi/texture.h>
+#include <pxr/imaging/hdSt/renderBuffer.h>
+
+extern "C"
+int LabCreateRGBAf16Texture(int width, int height, uint8_t* rgba_pixels);
+extern "C"
+void* LabTextureHardwareHandle(int texture);
+extern "C"
+void LabRemoveTexture(int texture);
+extern "C"
+void LabUpdateRGBAf16Texture(int texture, uint8_t* rgba_pixels);
+
+
+struct TextureCapture {
+    int width = 0;
+    int height = 0;
+    int handle = -1;
+};
+
+TextureCapture texcap;
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -79,19 +100,6 @@ void Viewport::_Draw()
     _UpdateProjection();
     _UpdateGrid();
     _UpdateHydraRender();
-
-    auto taskController = _engine.GetHdxTaskController();
-    HdRenderBuffer* buffer = taskController->GetRenderOutput(HdAovTokens->color);
-    VtValue aov = buffer->GetResource(false);
-    if (aov.IsHolding<HgiTextureHandle>()) {
-        HgiTextureHandle textureHandle = aov.Get<HgiTextureHandle>();
-        HgiMetalTexture* hgiMetalTexture = static_cast<HgiMetalTexture*>(textureHandle.Get());
-        if (hgiMetalTexture) {
-            return (void*) hgiMetalTexture->GetTextureId();
-        }
-    }
-
-
     _UpdateTransformGuizmo();
     _UpdateCubeGuizmo();
     _UpdatePluginLabel();
@@ -197,6 +205,47 @@ void Viewport::_UpdateGrid()
     ImGuizmo::DrawGrid(viewF.data(), projF.data(), identity.data(), 10);
 }
 
+static uint8_t*
+GetGPUTexture(
+    Hgi& hgi,
+    HgiTextureHandle const& texHandle,
+    int width,
+    int height,
+    HgiFormat format)
+{
+    // Copy the pixels from gpu into a cpu buffer so we can save it to disk.
+    const size_t bufferByteSize =
+        width * height * HgiGetDataSizeOfFormat(format);
+    static uint8_t* buffer = nullptr;
+    static size_t sz = 0;
+    if (sz < bufferByteSize) {
+        if (buffer) {
+            free(buffer);
+            buffer = nullptr;
+        }
+        sz = 0;
+    }
+    if (!buffer) {
+        buffer = (uint8_t*) malloc(bufferByteSize);
+        sz = bufferByteSize;
+    }
+
+    HgiTextureGpuToCpuOp copyOp;
+    copyOp.gpuSourceTexture = texHandle;
+    copyOp.sourceTexelOffset = GfVec3i(0);
+    copyOp.mipLevel = 0;
+    copyOp.cpuDestinationBuffer = buffer;
+    copyOp.destinationByteOffset = 0;
+    copyOp.destinationBufferByteSize = bufferByteSize;
+
+    HgiBlitCmdsUniquePtr blitCmds = hgi.CreateBlitCmds();
+    blitCmds->CopyTextureGpuToCpu(copyOp);
+    hgi.SubmitCmds(blitCmds.get(), HgiSubmitWaitTypeWaitUntilCompleted);
+
+    return buffer;
+}
+
+
 void Viewport::_UpdateHydraRender()
 {
     auto model = GetModel();
@@ -220,11 +269,40 @@ void Viewport::_UpdateHydraRender()
     // do the render
     _engine->Render();
 
+    auto tc = _engine->GetHdxTaskController();
+    HdRenderBuffer* buffer = tc->GetRenderOutput(HdAovTokens->color);
+    buffer->Resolve();
+    VtValue aov = buffer->GetResource(false);
+    if (aov.IsHolding<HgiTextureHandle>()) {
+        HgiTextureHandle textureHandle = aov.Get<HgiTextureHandle>();
+        if (textureHandle) {
+            HgiTextureDesc const& desc = textureHandle->GetDescriptor();
 
+            Hgi* hgi = _engine->GetHgi();
+            if (hgi) {
+                auto buffer = GetGPUTexture(*hgi,
+                                            textureHandle,
+                                            width, height,
+                                            desc.format);
 
-    // create an imgui image with the drawtarget color data
-    //void* id = _engine->GetRenderBufferData();
-    //ImGui::Image((ImTextureID) id, ImVec2(width, height), ImVec2(0, 1), ImVec2(1, 0));
+                if (texcap.width != width || texcap.height != height || texcap.handle < 0) {
+                    if (texcap.handle > 0) {
+                        LabRemoveTexture(texcap.handle);
+                    }
+                    texcap.width = width;
+                    texcap.height = height;
+                    texcap.handle = LabCreateRGBAf16Texture(width, height, buffer);
+                }
+                else {
+                    LabUpdateRGBAf16Texture(texcap.handle, (uint8_t*) buffer);
+                }
+
+                ImGui::Image((ImTextureID) LabTextureHardwareHandle(texcap.handle),
+                             ImVec2(width, height),
+                             ImVec2(0, 1), ImVec2(1, 0));
+            }
+        }
+    }
 }
 
 void Viewport::_UpdateTransformGuizmo()
