@@ -7,6 +7,7 @@
 #include <pxr/imaging/hd/rendererPluginRegistry.h>
 #include <pxr/imaging/hdx/pickTask.h>
 #include <pxr/imaging/hgi/tokens.h>
+#include <pxr/imaging/hdSt/renderBuffer.h>
 
 // temporary
 
@@ -49,6 +50,11 @@ Engine::~Engine()
     delete _renderIndex;
     _renderDelegate = nullptr;
 }
+
+Hgi* Engine::GetHgi() const {
+    return _hgi.get();
+}
+
 
 void Engine::Initialize()
 {
@@ -320,6 +326,10 @@ SdfPath Engine::FindIntersection(GfVec2f screenPos)
         _taskControllerId, SdfPath::AbsoluteRootPath());
 
     return path;
+}
+
+HdxTaskController* Engine::GetHdxTaskController() const {
+    return _taskController;
 }
 
 void* Engine::GetRenderBufferData()

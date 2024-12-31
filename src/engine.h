@@ -46,6 +46,8 @@ class Engine {
          */
         ~Engine();
 
+        Hgi* GetHgi() const;
+
         /**
          * @brief Get the list of available renderer plugins
          *
@@ -124,6 +126,9 @@ class Engine {
          */
         void *GetRenderBufferData();
 
+        HdxTaskController* GetHdxTaskController() const;
+
+
     private:
         UsdStageRefPtr _stage;
 
@@ -132,7 +137,7 @@ class Engine {
         HgiInterop _interop;
 #endif
 
-    GfMatrix4d _camView, _camProj;
+        GfMatrix4d _camView, _camProj;
         int _width, _height;
 
         HgiUniquePtr _hgi;

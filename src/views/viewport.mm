@@ -8,6 +8,30 @@
 #include <pxr/imaging/hd/cameraSchema.h>
 #include <pxr/imaging/hd/extentSchema.h>
 #include <pxr/usd/usd/stage.h>
+#include <pxr/imaging/hgi/blitCmdsOps.h>
+#include <pxr/imaging/hgiMetal/hgi.h>
+#include <pxr/imaging/hgiMetal/texture.h>
+#include <pxr/imaging/hdSt/renderBuffer.h>
+
+#import <Metal/Metal.h>
+
+extern "C"
+int LabCreateRGBAf16Texture(int width, int height, uint8_t* rgba_pixels);
+extern "C"
+void* LabTextureHardwareHandle(int texture);
+extern "C"
+void LabRemoveTexture(int texture);
+extern "C"
+void LabUpdateRGBAf16Texture(int texture, uint8_t* rgba_pixels);
+
+
+struct TextureCapture {
+    int width = 0;
+    int height = 0;
+    int handle = -1;
+};
+
+TextureCapture texcap;
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -79,19 +103,6 @@ void Viewport::_Draw()
     _UpdateProjection();
     _UpdateGrid();
     _UpdateHydraRender();
-
-    auto taskController = _engine.GetHdxTaskController();
-    HdRenderBuffer* buffer = taskController->GetRenderOutput(HdAovTokens->color);
-    VtValue aov = buffer->GetResource(false);
-    if (aov.IsHolding<HgiTextureHandle>()) {
-        HgiTextureHandle textureHandle = aov.Get<HgiTextureHandle>();
-        HgiMetalTexture* hgiMetalTexture = static_cast<HgiMetalTexture*>(textureHandle.Get());
-        if (hgiMetalTexture) {
-            return (void*) hgiMetalTexture->GetTextureId();
-        }
-    }
-
-
     _UpdateTransformGuizmo();
     _UpdateCubeGuizmo();
     _UpdatePluginLabel();
@@ -197,6 +208,48 @@ void Viewport::_UpdateGrid()
     ImGuizmo::DrawGrid(viewF.data(), projF.data(), identity.data(), 10);
 }
 
+static uint8_t*
+GetGPUTexture(
+    HgiMetal& hgiMetal,
+    HgiTextureHandle const& texHandle,
+    int width,
+    int height,
+    HgiFormat format)
+{
+    // Copy the pixels from gpu into a cpu buffer so we can save it to disk.
+    const size_t bufferByteSize =
+        width * height * HgiGetDataSizeOfFormat(format);
+    static uint8_t* buffer = nullptr;
+    static size_t sz = 0;
+    if (sz < bufferByteSize) {
+        if (buffer) {
+            free(buffer);
+            buffer = nullptr;
+        }
+        sz = 0;
+    }
+    if (!buffer) {
+        buffer = (uint8_t*) malloc(bufferByteSize);
+        sz = bufferByteSize;
+    }
+
+    HgiTextureGpuToCpuOp copyOp;
+    copyOp.gpuSourceTexture = texHandle;
+    copyOp.sourceTexelOffset = GfVec3i(0);
+    copyOp.mipLevel = 0;
+    copyOp.cpuDestinationBuffer = buffer;
+    copyOp.destinationByteOffset = 0;
+    copyOp.destinationBufferByteSize = bufferByteSize;
+
+    HgiBlitCmdsUniquePtr blitCmds = hgiMetal.CreateBlitCmds();
+    blitCmds->CopyTextureGpuToCpu(copyOp);
+    hgiMetal.SubmitCmds(blitCmds.get(), HgiSubmitWaitTypeWaitUntilCompleted);
+
+    return buffer;
+    //_SaveToPNG(width, height, buffer.data(), filePath);
+}
+
+
 void Viewport::_UpdateHydraRender()
 {
     auto model = GetModel();
@@ -220,11 +273,136 @@ void Viewport::_UpdateHydraRender()
     // do the render
     _engine->Render();
 
+    auto tc = _engine->GetHdxTaskController();
+    HdRenderBuffer* buffer = tc->GetRenderOutput(HdAovTokens->color);
+    buffer->Resolve();
+    VtValue aov = buffer->GetResource(false);
+    if (aov.IsHolding<HgiTextureHandle>()) {
+        HgiTextureHandle textureHandle = aov.Get<HgiTextureHandle>();
+        HgiMetalTexture* hgiMetalTexture = static_cast<HgiMetalTexture*>(textureHandle.Get());
+        if (hgiMetalTexture) {
+            id<MTLTexture> tex = hgiMetalTexture->GetTextureId();
+#if 1
+            HgiFormat format = HgiFormatFloat16Vec4;
+            switch(tex.pixelFormat) {
+                case MTLPixelFormatDepth32Float:
+                    format = HgiFormatFloat32; break;
+                case MTLPixelFormatRGBA16Unorm:
+                    format = HgiFormatUInt16Vec4; break;
+                case MTLPixelFormatRGBA16Float:
+                    format = HgiFormatFloat16Vec4; break;
+                default: break;
+            }
 
+            Hgi* hgi = _engine->GetHgi();
+            HgiMetal* hgiMetal = dynamic_cast<HgiMetal*>(hgi);
+            if (hgi) {
+                auto buffer = GetGPUTexture(*hgiMetal,
+                                            textureHandle,
+                                            width, height,
+                                            format);
 
-    // create an imgui image with the drawtarget color data
-    //void* id = _engine->GetRenderBufferData();
-    //ImGui::Image((ImTextureID) id, ImVec2(width, height), ImVec2(0, 1), ImVec2(1, 0));
+                if (texcap.width != width || texcap.height != height || texcap.handle < 0) {
+                    if (texcap.handle > 0) {
+                        LabRemoveTexture(texcap.handle);
+                    }
+                    texcap.width = width;
+                    texcap.height = height;
+                    texcap.handle = LabCreateRGBAf16Texture(width, height, buffer);
+                }
+                else {
+                    LabUpdateRGBAf16Texture(texcap.handle, (uint8_t*) buffer);
+                }
+
+                ImGui::Image((ImTextureID) LabTextureHardwareHandle(texcap.handle),
+                             ImVec2(width, height),
+                             ImVec2(0, 1), ImVec2(1, 0));
+            }
+
+#elif 0
+            // assume synchronized textures...
+            /// @TODO Hydra doesn't sync.
+            ImGui::Image((ImTextureID) tex,
+                         ImVec2(width, height),
+                         ImVec2(0, 1), ImVec2(1, 0));
+#else
+            // copy and cache the texture
+
+            /// @TOOD wire these through from MetalProvider
+            // Assume you have an MTLCommandQueue and MTLCommandBuffer created earlier
+            auto device = MTLCreateSystemDefaultDevice();
+            id<MTLCommandQueue> commandQueue = [device newCommandQueue];
+            id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+
+            static id<MTLTexture> bufferedTexture = nil;
+            if (bufferedTexture == nil) {
+                MTLTextureDescriptor* desc = [MTLTextureDescriptor
+                                texture2DDescriptorWithPixelFormat:tex.pixelFormat
+                                                             width:tex.width
+                                                            height:tex.height
+                                                         mipmapped:NO];
+                bufferedTexture = [device newTextureWithDescriptor:desc];
+            }
+            // if the buffered texture size differs from tex, resize it
+            if (bufferedTexture.width != tex.width || bufferedTexture.height != tex.height) {
+                MTLTextureDescriptor* desc = [MTLTextureDescriptor
+                                texture2DDescriptorWithPixelFormat:tex.pixelFormat
+                                                             width:tex.width
+                                                            height:tex.height
+                                                         mipmapped:NO];
+                bufferedTexture = [bufferedTexture.device newTextureWithDescriptor:desc];
+            }
+
+            int bpp = 4;
+            switch (tex.pixelFormat) {
+                case MTLPixelFormatDepth32Float:
+                    bpp = 4;
+                    break;
+                case MTLPixelFormatRGBA16Unorm:
+                case MTLPixelFormatRGBA16Float:
+                    bpp = 8;
+                    break;
+                default:
+                    break;
+            }
+
+            // Create a buffer to read from `tex`
+            NSUInteger bytesPerRow = tex.width * bpp;
+            NSUInteger bufferSize = bytesPerRow * tex.height;
+            id<MTLBuffer> tempBuffer = [device newBufferWithLength:bufferSize
+                                                           options:MTLResourceStorageModeShared];
+
+            // Create a blit command encoder to copy the texture to the buffer
+            id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
+            [blitEncoder copyFromTexture:tex
+                             sourceSlice:0
+                             sourceLevel:0
+                            sourceOrigin:MTLOriginMake(0, 0, 0)
+                              sourceSize:MTLSizeMake(tex.width, tex.height, 1)
+                                toBuffer:tempBuffer
+                       destinationOffset:0
+                  destinationBytesPerRow:bytesPerRow
+                destinationBytesPerImage:bufferSize];
+            [blitEncoder endEncoding];
+
+            // Commit the command buffer and wait for it to complete
+            [commandBuffer commit];
+            [commandBuffer waitUntilCompleted];
+
+            // Copy the buffer contents to the `bufferedTexture`
+            // Assuming `bufferedTexture` has already been created with matching dimensions
+            MTLRegion region = MTLRegionMake2D(0, 0, tex.width, tex.height);
+            [bufferedTexture replaceRegion:region
+                                mipmapLevel:0
+                                  withBytes:tempBuffer.contents
+                                bytesPerRow:bytesPerRow];
+
+            ImGui::Image((ImTextureID) bufferedTexture,
+                         ImVec2(width, height),
+                         ImVec2(0, 1), ImVec2(1, 0));
+#endif
+        }
+    }
 }
 
 void Viewport::_UpdateTransformGuizmo()
