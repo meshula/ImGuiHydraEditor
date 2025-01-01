@@ -106,7 +106,10 @@ void Editor::_AppendDataSourceAttrs(
 
 void Editor::_AppendAllPrimAttrs(SdfPath primPath)
 {
-    HdSceneIndexPrim prim = _sceneIndex->GetPrim(primPath);
+    HdSceneIndexPrim prim = GetModel()->GetFinalSceneIndex()->GetPrim(primPath);
+    if (!prim.dataSource)
+        return;
+    
     TfTokenVector tokens = prim.dataSource->GetNames();
 
     if (tokens.size() < 1) return;

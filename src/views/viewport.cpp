@@ -435,7 +435,7 @@ void Viewport::_UpdateViewportFromActiveCam()
 {
     if (_activeCam.IsEmpty()) return;
 
-    HdSceneIndexPrim prim = _sceneIndex->GetPrim(_activeCam);
+    HdSceneIndexPrim prim = GetModel()->GetFinalSceneIndex()->GetPrim(_activeCam);
     GfCamera gfCam = _ToGfCamera(prim);
     GfFrustum frustum = gfCam.GetFrustum();
     _eye = frustum.GetPosition();
@@ -451,7 +451,7 @@ void Viewport::_UpdateActiveCamFromViewport()
 {
     if (_activeCam.IsEmpty()) return;
 
-    HdSceneIndexPrim prim = _sceneIndex->GetPrim(_activeCam);
+    HdSceneIndexPrim prim = GetModel()->GetFinalSceneIndex()->GetPrim(_activeCam);
     GfCamera gfCam = _ToGfCamera(prim);
 
     GfFrustum prevFrustum = gfCam.GetFrustum();
@@ -473,7 +473,7 @@ void Viewport::_UpdateProjection()
     float farPlane = _FREE_CAM_FAR;
 
     if (!_activeCam.IsEmpty()) {
-        HdSceneIndexPrim prim = _sceneIndex->GetPrim(_activeCam);
+        HdSceneIndexPrim prim = GetModel()->GetFinalSceneIndex()->GetPrim(_activeCam);
         GfCamera gfCam = _ToGfCamera(prim);
         fov = gfCam.GetFieldOfView(GfCamera::FOVVertical);
         nearPlane = gfCam.GetClippingRange().GetMin();
@@ -534,7 +534,7 @@ void Viewport::_FocusOnPrim(SdfPath primPath)
 {
     if (primPath.IsEmpty()) return;
 
-    HdSceneIndexPrim prim = _sceneIndex->GetPrim(primPath);
+    HdSceneIndexPrim prim = GetModel()->GetFinalSceneIndex()->GetPrim(primPath);
 
     HdExtentSchema extentSchema =
         HdExtentSchema::GetFromParent(prim.dataSource);

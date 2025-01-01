@@ -75,9 +75,7 @@ class View {
          */
         bool IsDisplayed();
 
-    protected:
-        pxr::HdSceneIndexBaseRefPtr _sceneIndex;
-        /**
+    protected:        /**
          * @brief Get the inner rectangle object of the current ImGui view
          *
          * @return the rectangle object

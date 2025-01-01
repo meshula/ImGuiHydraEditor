@@ -9,8 +9,7 @@ View::View(Model* model, const string label)
       _wasHovered(false),
       _wasDisplayed(true)
 {
-    _sceneIndex = GetModel()->GetFinalSceneIndex();
-};
+}
 
 Model* View::GetModel()
 {
@@ -20,7 +19,7 @@ Model* View::GetModel()
 const string View::GetViewType()
 {
     return VIEW_TYPE;
-};
+}
 
 const string View::GetViewLabel()
 {

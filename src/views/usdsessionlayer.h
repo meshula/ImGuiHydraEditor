@@ -50,6 +50,7 @@ class UsdSessionLayer : public View {
 
         void SetStage(pxr::UsdStageRefPtr stage);
         pxr::SdfLayerRefPtr GetSessionLayer() const { return _sessionLayer; }
+        void UpdateStageSceneIndex();
 
         /**
          * @brief Set the model to an empty stage

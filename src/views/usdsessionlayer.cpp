@@ -114,21 +114,23 @@ void UsdSessionLayer::_Draw()
 
 void UsdSessionLayer::SetEmptyStage()
 {
-    _stage = UsdStage::CreateInMemory();
+    auto stage = UsdStage::CreateInMemory();
     UsdGeomSetStageUpAxis(_stage, UsdGeomTokens->y);
-
-    _rootLayer = _stage->GetRootLayer();
-    _sessionLayer = _stage->GetSessionLayer();
-
-    _stage->SetEditTarget(_sessionLayer);
-    _stageSceneIndex->SetStage(_stage);
-    _stageSceneIndex->SetTime(UsdTimeCode::Default());
-
-    GetModel()->SetStage(_stage);
+    SetStage(stage);
 }
 
 void UsdSessionLayer::SetStage(UsdStageRefPtr stage)
 {
+    // reset stage indices completely
+    UsdImagingCreateSceneIndicesInfo info;
+    info.displayUnloadedPrimsWithBounds = false;
+    const UsdImagingSceneIndices sceneIndices =
+        UsdImagingCreateSceneIndices(info);
+
+    _stageSceneIndex = sceneIndices.stageSceneIndex;
+    GetModel()->AddSceneIndexBase(sceneIndices.finalSceneIndex);
+
+    // set the new stage
     _stage = stage;
     _rootLayer = _stage->GetRootLayer();
     _sessionLayer = _stage->GetSessionLayer();
@@ -148,7 +150,16 @@ void UsdSessionLayer::_LoadUsdStage(const string usdFilePath)
         SetEmptyStage();
         return;
     }
+    // reset stage indices completely
+    UsdImagingCreateSceneIndicesInfo info;
+    info.displayUnloadedPrimsWithBounds = false;
+    const UsdImagingSceneIndices sceneIndices =
+        UsdImagingCreateSceneIndices(info);
 
+    _stageSceneIndex = sceneIndices.stageSceneIndex;
+    GetModel()->AddSceneIndexBase(sceneIndices.finalSceneIndex);
+
+    // load the new stage
     _rootLayer = SdfLayer::FindOrOpen(usdFilePath);
     _sessionLayer = SdfLayer::CreateAnonymous();
     _stage = UsdStage::Open(_rootLayer, _sessionLayer);
@@ -201,6 +212,10 @@ void UsdSessionLayer::_CreatePrim(TfToken primType)
         prim.CreateDisplayColorAttr(VtValue(color));
     }
 
+    _stageSceneIndex->ApplyPendingUpdates();
+}
+
+void UsdSessionLayer::UpdateStageSceneIndex() {
     _stageSceneIndex->ApplyPendingUpdates();
 }
 
