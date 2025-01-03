@@ -286,7 +286,7 @@ void Engine::Render()
 #endif
 }
 
-SdfPath Engine::FindIntersection(GfVec2f screenPos)
+Engine::IntersectionResult Engine::FindIntersection(GfVec2f screenPos)
 {
     // create a narrowed frustum on the given position
     float normalizedXPos = screenPos[0] / _width;
@@ -320,12 +320,12 @@ SdfPath Engine::FindIntersection(GfVec2f screenPos)
     _engine.Execute(_renderIndex, &tasks);
 
     // get the hitting point
-    if (allHits.size() != 1) return SdfPath();
+    if (allHits.size() != 1) return {};
 
     const SdfPath path = allHits[0].objectId.ReplacePrefix(
         _taskControllerId, SdfPath::AbsoluteRootPath());
 
-    return path;
+    return { path, GfVec3f(allHits[0].worldSpaceHitPoint), GfVec3f(allHits[0].worldSpaceHitNormal) };
 }
 
 HdxTaskController* Engine::GetHdxTaskController() const {

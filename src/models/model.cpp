@@ -88,4 +88,19 @@ void Model::SetSelection(SdfPathVector primPaths)
     _selection = primPaths;
 }
 
+void Model::SetHit(GfVec3f hitPoint, GfVec3f hitNormal)
+{
+    _hitPoint = hitPoint;
+    _hitNormal = hitNormal;
+    _hitGeneration++;
+}
+
+int Model::GetHit(GfVec3f& hitPoint, GfVec3f& hitNormal)
+{
+    hitPoint = _hitPoint;
+    hitNormal = _hitNormal;
+    return _hitGeneration;
+}
+
+
 PXR_NAMESPACE_CLOSE_SCOPE

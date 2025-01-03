@@ -117,7 +117,12 @@ class Engine {
          * @return the Sdf Path to the Prim visible at the given screen
          * position
          */
-        SdfPath FindIntersection(GfVec2f screenPos);
+        struct IntersectionResult {
+            SdfPath path;
+            GfVec3f worldSpaceHitPoint;
+            GfVec3f worldSpaceHitNormal;
+        };
+        IntersectionResult FindIntersection(GfVec2f screenPos);
 
         /**
          * @brief Get the data from the render buffer

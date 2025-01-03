@@ -331,13 +331,14 @@ void Viewport::_UpdateCubeGuizmo()
 {
     GfMatrix4d view = _getCurViewMatrix();
     GfMatrix4f viewF(view);
+    GfMatrix4f currView(viewF);
 
     ImGuizmo::ViewManipulate(
         viewF.data(), 8.f,
         ImVec2(GetInnerRect().Max.x - 128, GetInnerRect().Min.y + 18),
         ImVec2(128, 128), IM_COL32_BLACK_TRANS);
 
-    if (viewF != GfMatrix4f(view)) {
+    if (viewF != currView) {
         view = GfMatrix4d(viewF);
         GfFrustum frustum;
         frustum.SetPositionAndRotationFromMatrix(view.GetInverse());
@@ -607,10 +608,14 @@ void Viewport::_MouseReleaseEvent(ImGuiMouseButton_ button, ImVec2 mousePos)
         ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
         if (fabs(delta.x) + fabs(delta.y) < 0.001f) {
             GfVec2f gfMousePos(mousePos[0], mousePos[1]);
-            SdfPath primPath = _engine->FindIntersection(gfMousePos);
+            Engine::IntersectionResult intr = _engine->FindIntersection(gfMousePos);
 
-            if (primPath.IsEmpty()) GetModel()->SetSelection({});
-            else GetModel()->SetSelection({primPath});
+            if (intr.path.IsEmpty())
+                GetModel()->SetSelection({});
+            else {
+                GetModel()->SetSelection({intr.path});
+                GetModel()->SetHit(intr.worldSpaceHitPoint, intr.worldSpaceHitNormal);
+            }
         }
     }
 }

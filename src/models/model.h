@@ -125,7 +125,12 @@ class Model {
          */
         void SetSelection(SdfPathVector primPaths);
 
+        void SetHit(GfVec3f hitPoint, GfVec3f hitNormal);
+        int GetHit(GfVec3f& hitPoint, GfVec3f& hitNormal);
+
     private:
+        int _hitGeneration = 0;
+        GfVec3f _hitPoint, _hitNormal;
         UsdStageRefPtr _stage;
         SdfPathVector _selection;
         HdSceneIndexBaseRefPtr _editableSceneIndex;
