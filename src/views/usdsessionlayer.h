@@ -9,7 +9,9 @@
  */
 #pragma once
 
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
+#endif
 #include <TextEditor.h>
 #include <pxr/usdImaging/usdImaging/stageSceneIndex.h>
 

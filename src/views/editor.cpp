@@ -1,6 +1,8 @@
 #include "editor.h"
 
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
+#endif
 #include <ImGuizmo.h>
 #include <imgui.h>
 #include <pxr/base/gf/matrix4d.h>
