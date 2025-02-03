@@ -104,6 +104,8 @@ void Viewport::_Draw()
     _UpdateCubeGuizmo();
     _UpdatePluginLabel();
 
+    ImGuizmo::PopID();
+
     ImGui::EndChild();
 };
 
@@ -185,7 +187,7 @@ void Viewport::_ConfigureImGuizmo()
 
     // convert last label char to ID
     string label = GetViewLabel();
-    ImGuizmo::SetID(int(label[label.size() - 1]));
+    ImGuizmo::PushID(int(label[label.size() - 1]));
 
     ImGuizmo::SetDrawlist();
     ImGuizmo::SetRect(GetInnerRect().Min.x, GetInnerRect().Min.y,
