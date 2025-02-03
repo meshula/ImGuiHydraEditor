@@ -59,8 +59,19 @@ void View::Update()
 
     // update inner rect size
     _innerRect = ImGui::GetCurrentWindow()->InnerRect;
+    auto mn = _innerRect.Min;
+    auto mx = _innerRect.Max;
 
-    if (ImGui::IsMouseHoveringRect(_innerRect.Min, _innerRect.Max)) {
+    //bool is_clicked = ImGui::IsItemClicked();
+    //bool is_active = ImGui::IsItemActive();
+    bool is_hovered = ImGui::IsItemHovered();
+    if (is_hovered) {
+        //static int foo = 0;
+        //printf("hovered %d\n", foo++);
+    }
+
+    if (is_hovered) {
+    //if (ImGui::IsMouseHoveringRect(_innerRect.Min, _innerRect.Max)) {
         if (!_wasHovered) {
             _HoverInEvent();
             _wasHovered = true;
