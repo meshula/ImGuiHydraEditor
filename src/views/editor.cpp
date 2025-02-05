@@ -116,7 +116,7 @@ void Editor::_AppendAllPrimAttrs(SdfPath primPath)
 
     if (tokens.size() < 1) return;
 
-    if (ImGui::CollapsingHeader("Prim attributes")) {
+    if (ImGui::CollapsingHeader("Hd Prim attributes")) {
         _AppendDataSourceAttrs(prim.dataSource);
     }
 }

@@ -95,7 +95,8 @@ void Viewport::_Draw()
     _ConfigureImGuizmo();
 
     // read from active cam in case it is modify by another view
-    if (!ImGui::IsWindowFocused()) _UpdateViewportFromActiveCam();
+    if (!ImGui::IsWindowFocused())
+        _UpdateViewportFromActiveCam();
 
     _UpdateProjection();
     _UpdateGrid();
@@ -436,9 +437,13 @@ void Viewport::_SetActiveCam(SdfPath primPath)
 
 void Viewport::_UpdateViewportFromActiveCam()
 {
-    if (_activeCam.IsEmpty()) return;
+    if (_activeCam.IsEmpty())
+        return;
 
-    HdSceneIndexPrim prim = GetModel()->GetFinalSceneIndex()->GetPrim(_activeCam);
+    auto model = GetModel();
+    model->SetActiveCamera(_activeCam);
+
+    HdSceneIndexPrim prim = model->GetFinalSceneIndex()->GetPrim(_activeCam);
     GfCamera gfCam = _ToGfCamera(prim);
     GfFrustum frustum = gfCam.GetFrustum();
     _eye = frustum.GetPosition();
@@ -452,7 +457,8 @@ GfMatrix4d Viewport::_getCurViewMatrix()
 
 void Viewport::_UpdateActiveCamFromViewport()
 {
-    if (_activeCam.IsEmpty()) return;
+    if (_activeCam.IsEmpty())
+        return;
 
     HdSceneIndexPrim prim = GetModel()->GetFinalSceneIndex()->GetPrim(_activeCam);
     GfCamera gfCam = _ToGfCamera(prim);
@@ -460,11 +466,11 @@ void Viewport::_UpdateActiveCamFromViewport()
     GfFrustum prevFrustum = gfCam.GetFrustum();
 
     GfMatrix4d view = _getCurViewMatrix();
-    ;
     GfMatrix4d prevView = prevFrustum.ComputeViewMatrix();
     GfMatrix4d prevProj = prevFrustum.ComputeProjectionMatrix();
 
-    if (view == prevView && _proj == prevProj) return;
+    if (view == prevView && _proj == prevProj)
+        return;
 
     _xformSceneIndex->SetXform(_activeCam, view.GetInverse());
 }

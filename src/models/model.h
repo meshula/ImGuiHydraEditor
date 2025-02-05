@@ -128,6 +128,9 @@ class Model {
         void SetHit(GfVec3f hitPoint, GfVec3f hitNormal);
         int GetHit(GfVec3f& hitPoint, GfVec3f& hitNormal);
 
+        void SetActiveCamera(SdfPath prim) { _activeCamera = prim; }
+        SdfPath GetActiveCamera() const { return _activeCamera; }
+
     private:
         int _hitGeneration = 0;
         GfVec3f _hitPoint, _hitNormal;
@@ -135,6 +138,7 @@ class Model {
         SdfPathVector _selection;
         HdSceneIndexBaseRefPtr _editableSceneIndex;
         HdMergingSceneIndexRefPtr _sceneIndexBases, _finalSceneIndex;
+        SdfPath _activeCamera;
 };
 
 PXR_NAMESPACE_CLOSE_SCOPE
