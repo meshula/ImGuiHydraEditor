@@ -135,7 +135,7 @@ class Engine {
 
 
     private:
-        UsdStageRefPtr _stage;
+        UsdStageWeakPtr _stage;
 
 #ifdef USD_GLINTEROP
         GlfDrawTargetRefPtr _drawTarget;

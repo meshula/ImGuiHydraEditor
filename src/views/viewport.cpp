@@ -407,19 +407,43 @@ void Viewport::_OrbitActiveCam(ImVec2 mouseDeltaPos)
 
     _UpdateActiveCamFromViewport();
 }
+/*
+
+ const lc_rigid_transform* cmt = &camera.mount.transform;
+ lc_v3f pos = cmt->position;
+ lc_v3f camera_to_focus = pos - _orbit_center;
+ float distance_to_focus = length(camera_to_focus);
+ const float feel = 0.02f;
+ float scale = std::max(0.01f, logf(distance_to_focus) * feel);
+ lc_v3f deltaX = lc_rt_right(cmt) * -delta.x * scale;
+ lc_v3f dP = lc_rt_forward(cmt) * -delta.z * scale - deltaX - lc_rt_up(cmt) * -delta.y * scale;
+ if (!_orbit_fixed)
+     _orbit_center += dP;
+ lc_mount_set_view_transform_quat_pos(&camera.mount, cmt->orientation, cmt->position + dP);
+
+ */
+
 
 void Viewport::_ZoomActiveCam(ImVec2 mouseDeltaPos)
 {
-    GfVec3d camFront = (_at - _eye).GetNormalized();
-    _eye += camFront * mouseDeltaPos.x / 100.f;
+    GfVec3d camToFocus = _eye - _at;
+    float focusDistance = camToFocus.GetLength();
+    const float feel = 0.02f;
+    float scale = std::max(0.01f, logf(focusDistance * feel));
+    GfVec3d camFront = (_at - _eye).GetNormalized() * mouseDeltaPos.y * scale;
+    _eye += camFront;
 
     _UpdateActiveCamFromViewport();
 }
 
 void Viewport::_ZoomActiveCam(float scrollWheel)
 {
-    GfVec3d camFront = (_at - _eye).GetNormalized();
-    _eye += camFront * scrollWheel / 10.f;
+    GfVec3d camToFocus = _eye - _at;
+    float focusDistance = camToFocus.GetLength();
+    const float feel = 0.02f;
+    float scale = std::max(0.01f, logf(focusDistance * feel));
+    GfVec3d camFront = (_at - _eye).GetNormalized() * scrollWheel * scale;
+    _eye += camFront;
 
     _UpdateActiveCamFromViewport();
 }

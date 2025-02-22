@@ -35,13 +35,27 @@ GfVec3f ColorFilterSceneIndex::GetDisplayColor(const SdfPath &primPath) const
 
     if (!primvarSchema.IsDefined()) return GfVec3f(-1.f);
 
-    VtArray<GfVec3f> colors = primvarSchema.GetPrimvarValue()
-                                  ->GetValue(time)
-                                  .Get<VtArray<GfVec3f>>();
+    GfVec3f color;
+    auto colorValue = primvarSchema.GetPrimvarValue()->GetValue(time);
+    if (colorValue.IsHolding<VtArray<GfVec3f>>()) {
+        // Note ~ our /Grid sceneIndex uses an array of colors on displayColor
+        // which is not really right for fetching a display color.
+        auto colorArray = colorValue.Get<VtArray<GfVec3f>>();
+        if (colorArray.size() > 0) {
+            color = colorArray[0];
+        }
+        else {
+            color = GfVec3f{0,0,0};
+        }
+    }
+    else {
+        color = colorValue.Get<GfVec3f>();
+    }
 
-    if (colors.size() != 1) return GfVec3f(-1.f);
-
-    return colors[0];
+//    GfVec3f color = primvarSchema.GetPrimvarValue()
+  //                                ->GetValue(time)
+    //                              .Get<GfVec3f>();
+    return color;
 }
 
 void ColorFilterSceneIndex::SetDisplayColor(const SdfPath &primPath,

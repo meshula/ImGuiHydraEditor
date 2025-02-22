@@ -67,7 +67,7 @@ class UsdSessionLayer : public View {
         ImGuiWindowFlags _gizmoWindowFlags;
         pxr::SdfLayerRefPtr _rootLayer, _sessionLayer;
         pxr::UsdImagingStageSceneIndexRefPtr _stageSceneIndex;
-        pxr::UsdStageRefPtr _stage;
+        pxr::UsdStageWeakPtr _stage;
 
         /**
          * @brief Override of the View::Draw

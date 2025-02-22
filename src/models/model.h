@@ -134,7 +134,7 @@ class Model {
     private:
         int _hitGeneration = 0;
         GfVec3f _hitPoint, _hitNormal;
-        UsdStageRefPtr _stage;
+        UsdStageWeakPtr _stage;
         SdfPathVector _selection;
         HdSceneIndexBaseRefPtr _editableSceneIndex;
         HdMergingSceneIndexRefPtr _sceneIndexBases, _finalSceneIndex;
