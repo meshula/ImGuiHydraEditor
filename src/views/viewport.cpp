@@ -21,7 +21,7 @@ void LabRemoveTexture(int texture);
 extern "C"
 void LabUpdateRGBAf16Texture(int texture, uint8_t* rgba_pixels);
 
-
+namespace {
 struct TextureCapture {
     int width = 0;
     int height = 0;
@@ -29,7 +29,7 @@ struct TextureCapture {
 };
 
 TextureCapture texcap;
-
+} // anon
 PXR_NAMESPACE_OPEN_SCOPE
 
 Viewport::Viewport(Model* model, const string label) : View(model, label)
