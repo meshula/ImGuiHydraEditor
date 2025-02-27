@@ -2,19 +2,14 @@
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-View::View(Model* model, const string label)
-    : _model(model),
-      _label(label),
+View::View(const string label)
+:     _label(label),
       _wasFocused(false),
       _wasHovered(false),
       _wasDisplayed(true)
 {
 }
 
-Model* View::GetModel()
-{
-    return _model;
-}
 
 const string View::GetViewType()
 {

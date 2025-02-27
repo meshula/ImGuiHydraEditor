@@ -133,6 +133,8 @@ class Engine {
 
         HdxTaskController* GetHdxTaskController() const;
 
+        void RemoveSceneIndex(HdSceneIndexBaseRefPtr);
+
 
     private:
         UsdStageWeakPtr _stage;

@@ -21,7 +21,6 @@
 #include <pxr/usd/usd/prim.h>
 
 #include "engine.h"
-#include "models/model.h"
 #include "sceneindices/gridsceneindex.h"
 #include "sceneindices/xformfiltersceneindex.h"
 #include "view.h"

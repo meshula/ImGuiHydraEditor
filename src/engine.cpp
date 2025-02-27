@@ -55,6 +55,13 @@ Hgi* Engine::GetHgi() const {
     return _hgi.get();
 }
 
+void Engine::RemoveSceneIndex(HdSceneIndexBaseRefPtr index) {
+    if (_renderIndex && index) {
+        _renderIndex->RemoveSceneIndex(_sceneIndex);
+    }
+}
+
+
 
 void Engine::Initialize()
 {

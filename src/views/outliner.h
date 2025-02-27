@@ -37,7 +37,7 @@ class Outliner : public View {
          * @param model the Model of the new Outliner view
          * @param label the ImGui label of the new Outliner view
          */
-        Outliner(Model* model, const string label = VIEW_TYPE);
+        Outliner(const string label = VIEW_TYPE);
 
         /**
          * @brief Override of the View::GetViewType

@@ -121,22 +121,25 @@ void UsdSessionLayer::SetEmptyStage()
 
 void UsdSessionLayer::SetStage(UsdStageRefPtr stage)
 {
-    // reset stage indices completely
+    if (_sceneIndices.finalSceneIndex) {
+        /// @TODO renderIndex is in Engine
+        _engine->RemoveSceneIndex(_sceneIndices.finalSceneIndex);
+    }
+
+    // create scene index for the first time
     UsdImagingCreateSceneIndicesInfo info;
     info.displayUnloadedPrimsWithBounds = false;
-    const UsdImagingSceneIndices sceneIndices =
-        UsdImagingCreateSceneIndices(info);
+    _sceneIndices = UsdImagingCreateSceneIndices(info);
+    _stageSceneIndex = _sceneIndices.stageSceneIndex;
+    GetModel()->AddSceneIndexBase(_sceneIndices.finalSceneIndex);
 
-    _stageSceneIndex = sceneIndices.stageSceneIndex;
-    GetModel()->AddSceneIndexBase(sceneIndices.finalSceneIndex);
-
-    // set the new stage
+    _stageSceneIndex->SetStage(stage);
     _stage = stage;
+
     _rootLayer = _stage->GetRootLayer();
     _sessionLayer = _stage->GetSessionLayer();
 
     _stage->SetEditTarget(_sessionLayer);
-    _stageSceneIndex->SetStage(_stage);
     _stageSceneIndex->SetTime(UsdTimeCode::Default());
 
     GetModel()->SetStage(_stage);

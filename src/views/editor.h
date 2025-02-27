@@ -34,7 +34,7 @@ class Editor : public View {
          * @param model the Model of the new Editor view
          * @param label the ImGui label of the new Editor view
          */
-        Editor(Model* model, const string label = VIEW_TYPE);
+        Editor(const string label = VIEW_TYPE);
 
         /**
          * @brief Override of the View::GetViewType

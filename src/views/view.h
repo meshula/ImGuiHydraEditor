@@ -17,8 +17,6 @@
 #include <imgui_internal.h>
 #include <pxr/imaging/hd/sceneIndex.h>
 
-#include "models/model.h"
-
 PXR_NAMESPACE_OPEN_SCOPE
 
 using namespace std;
@@ -36,17 +34,10 @@ class View {
         /**
          * @brief Construct a new View object
          *
-         * @param model the Model of the new View view
          * @param label the ImGui label of the new View view
          */
-        View(Model* model, const string label);
+        View(const string label);
 
-        /**
-         * @brief Get the Model
-         *
-         * @return A pointer to the current model
-         */
-        Model* GetModel();
 
         /**
          * @brief Get the View Type of the current View object
@@ -85,7 +76,6 @@ class View {
         ImRect GetInnerRect();
 
     private:
-        Model* _model;
         string _label;
         bool _wasFocused;
         bool _wasHovered;
