@@ -9,9 +9,9 @@
 #include <pxr/imaging/hgi/tokens.h>
 #include <pxr/imaging/hdSt/renderBuffer.h>
 
-// temporary
-
+#ifdef USE_GLINTEROP
 #include <pxr/imaging/garch/glApi.h>
+#endif
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -60,8 +60,6 @@ void Engine::RemoveSceneIndex(HdSceneIndexBaseRefPtr index) {
         _renderIndex->RemoveSceneIndex(_sceneIndex);
     }
 }
-
-
 
 void Engine::Initialize()
 {
